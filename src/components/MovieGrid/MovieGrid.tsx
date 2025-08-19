@@ -2,8 +2,8 @@ import css from './MovieGrid.module.css'
 import type { Movie } from '../../types/movie';
 import noImagePlaceholder from '../../assets/noImagePlaceholder.png';
 
-type MovieGridProps = {
-  onSelect: (movieId: number) => void;
+interface MovieGridProps {
+  onSelect: (movie: Movie) => void;
   movies: Movie[];
 }
 
@@ -12,13 +12,17 @@ const MovieGrid = ({ onSelect, movies }: MovieGridProps) => {
     <ul className={css.grid}>
       {movies.map((movie) => {
         const posterPath = movie.poster_path || movie.backdrop_path;
-        
+
         return (
-          <li key={movie.id} onClick={() => onSelect(movie.id)}>
+          <li key={movie.id} onClick={() => onSelect(movie)}>
             <div className={css.card}>
               <img
                 className={css.image}
-                src={posterPath ? `https://image.tmdb.org/t/p/w500/${posterPath}` : noImagePlaceholder}
+                src={
+                  posterPath
+                    ? `https://image.tmdb.org/t/p/w500/${posterPath}`
+                    : noImagePlaceholder
+                }
                 alt={movie.title}
                 loading="lazy"
               />
@@ -27,8 +31,8 @@ const MovieGrid = ({ onSelect, movies }: MovieGridProps) => {
           </li>
         );
       })}
-  </ul>
-  )
-}
+    </ul>
+  );
+};
 
 export default MovieGrid
