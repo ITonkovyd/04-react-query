@@ -11,20 +11,11 @@ import ReactPaginate from "react-paginate";
 import css from "./App.module.css";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-interface IResponseData {
-  movies: Movie[];
-  totalPages: number;
-}
-
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [responseData, setResponseData] = useState<IResponseData>({
-    movies: [],
-    totalPages: 0,
-  });
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [page, setPage] = useState(1);
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isSuccess } = useQuery({
     queryKey: ["fetchMovies", searchQuery, page],
     queryFn: () => fetchMovies(searchQuery, page),
     enabled: searchQuery.trim() !== "",
@@ -39,26 +30,27 @@ export default function App() {
 
       return;
     }
-
-    if (data.total_results > 0) {
-      setResponseData({
-        movies: data.results,
-        totalPages: data.total_pages,
-      });
-
-      return;
-    }
   }, [data]);
 
   return (
     <>
-      <SearchBar onSubmit={(query) => setSearchQuery(query)} />
-      {responseData.totalPages > 1 && (
+      <SearchBar
+        onSubmit={(query) => {
+          setPage(1);
+          setSearchQuery(query);
+        }}
+      />
+      {isLoading && <Loader />}
+      {isError && <ErrorMessage />}
+      {isSuccess && data.total_pages > 1 && (
         <ReactPaginate
-          pageCount={responseData.totalPages}
+          pageCount={data.total_pages}
           pageRangeDisplayed={5}
           marginPagesDisplayed={1}
-          onPageChange={({ selected }) => setPage(selected + 1)}
+          onPageChange={({ selected }) => {
+            setSearchQuery("");
+            setPage(selected + 1);
+          }}
           forcePage={page - 1}
           containerClassName={css.pagination}
           activeClassName={css.active}
@@ -66,9 +58,9 @@ export default function App() {
           previousLabel="←"
         />
       )}
-      {responseData.movies.length > 0 && (
+      {isSuccess && data.results.length > 0 && (
         <MovieGrid
-          movies={responseData.movies}
+          movies={data.results}
           onSelect={(movie) => setSelectedMovie(movie)}
         />
       )}
@@ -78,8 +70,6 @@ export default function App() {
           onClose={() => setSelectedMovie(null)}
         />
       )}
-      {isLoading && <Loader />}
-      {isError && <ErrorMessage />}
       <Toaster />
     </>
   );
